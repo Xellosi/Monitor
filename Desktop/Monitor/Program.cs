@@ -29,16 +29,22 @@ namespace monitor
             while (!sign.IsCancellationRequested)
             {
                 report = "";
-                report += rnd.Next(25, 1000).ToString()+",";
-                report += rnd.Next(30, 120).ToString() + ",";
-                report += rnd.Next(30, 120).ToString() + ",";
-                report += rnd.Next(0, 2).ToString() + ",";
-                report += rnd.Next(0, 20).ToString() + ",";
-                report += rnd.Next(0, 2).ToString();
+                report += rnd.Next(20, 53).ToString()+",";
+                report += rnd.Next(0, 110).ToString() + ",";
+                report += rnd.Next(0, 110).ToString() + ",";
+                if (rnd.Next(0, 10) == 0)
+                    report += "0,";
+                else
+                    report += "1,";
+                report += rnd.Next(0, 150).ToString() + ",";
+                if (rnd.Next(0, 10) == 0)
+                    report += "1";
+                else
+                    report += "0";
                 byte[] sendbuf = Encoding.ASCII.GetBytes(report);
                 s.SendTo(sendbuf, new IPEndPoint(IPAddress.Parse("127.0.0.1"), SimulatedPort));
                 Console.WriteLine("2222"+DateTime.Now.ToLongTimeString());
-                Thread.Sleep(1500);
+                Thread.Sleep(1000);
             }
         };
     }

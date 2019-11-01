@@ -508,7 +508,7 @@
             this.textBox1.ReadOnly = true;
             this.textBox1.Size = new System.Drawing.Size(296, 22);
             this.textBox1.TabIndex = 6;
-            this.textBox1.Text = "F:\\SAVEPICTURE";
+            this.textBox1.Text = "C:\\SAVEPICTURE";
             // 
             // button9
             // 

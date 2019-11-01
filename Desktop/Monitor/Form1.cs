@@ -25,6 +25,8 @@ namespace monitor
         string DbName;
         string DbTableName;
         string VirtualArduino;
+        VideoCapture Realcam;
+        static readonly object _locker= new object();
         Bitmap Shot;
         //private FilterInfoCollection webcam;
         //private VideoCapture cap;
@@ -71,10 +73,10 @@ namespace monitor
             comboBox2.Items.Add("Desktop");
             comboBox2.SelectedIndex = 0;
             //webcam = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-            var cap = new VideoCapture();
-            if (cap.IsOpened)
+            Realcam = new VideoCapture(0);
+            if (Realcam.IsOpened)
             {
-                comboBox2.Items.Add(cap);
+                comboBox2.Items.Add(Realcam.BackendName.Clone());
             }
             InitDB();
             Detecting_Events();
@@ -279,12 +281,16 @@ namespace monitor
                 }
             if (Directory.Exists(event_folder))
             {
+
+                //TODO try https://stackoverflow.com/questions/21497537/allow-an-image-to-be-accessed-by-several-threads
                 var path = Path.Combine(event_folder, DateTime.Now.ToString("yyddmmss") + ".jpg");
-                using (Bitmap b = (Bitmap)Shot.Clone())
-                using (Graphics g = Graphics.FromImage(b))
-                {
-                    g.DrawString(type_string, new Font("Arial", 100), Brushes.Red, new PointF(0, Screen.PrimaryScreen.Bounds.Height / 2));
-                    b.Save(path, ImageFormat.Jpeg);
+                lock (_locker) {
+                    using (Bitmap b = (Bitmap)Shot.Clone())
+                    using (Graphics g = Graphics.FromImage(b))
+                    {
+                        g.DrawString(type_string, new Font("Arial", 100), Brushes.Red, new PointF(0, Screen.PrimaryScreen.Bounds.Height / 2));
+                        b.Save(path, ImageFormat.Jpeg);
+                    }
                 }
             }
             /*
@@ -490,25 +496,31 @@ namespace monitor
             //video open
             if (camindex>= 0)
             {
-                pictureBox7.Image = Shot;
+                lock (_locker)
+                {
+                    pictureBox7.Image = Shot;
+                }
             }
         }
 
         private void Take_Shot()
         {
-            if (camindex == 0)
+            lock (_locker)
             {
-                using (var gfxScreenshot = Graphics.FromImage(Shot))
+                if (camindex == 0)
                 {
-                    // Take the screenshot from the upper left corner to the right bottom corner.
-                    gfxScreenshot.CopyFromScreen(Screen.PrimaryScreen.Bounds.X,
-                                            Screen.PrimaryScreen.Bounds.Y, 0, 0, Screen.PrimaryScreen.Bounds.Size, CopyPixelOperation.SourceCopy);
+                    using (var gfxScreenshot = Graphics.FromImage(Shot))
+                    {
+                        // Take the screenshot from the upper left corner to the right bottom corner.
+                        gfxScreenshot.CopyFromScreen(Screen.PrimaryScreen.Bounds.X,
+                                                Screen.PrimaryScreen.Bounds.Y, 0, 0, Screen.PrimaryScreen.Bounds.Size, CopyPixelOperation.SourceCopy);
+                    }
                 }
-            }
-            else
-            {
-                var vp = (VideoCapture)comboBox2.SelectedItem;
-                Shot = vp.QuerySmallFrame().ToImage<Bgr, Byte>().Bitmap;
+                else
+                {
+                    Realcam.QueryFrame();
+                    Shot = Realcam.QueryFrame().ToImage<Bgr, Byte>().Bitmap;
+                }
             }
         }
         private void Detecting_Events()
