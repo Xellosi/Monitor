@@ -33,9 +33,9 @@ namespace monitor
                 report += rnd.Next(0, 110).ToString() + ",";
                 report += rnd.Next(0, 110).ToString() + ",";
                 if (rnd.Next(0, 10) == 0)
-                    report += "0,";
-                else
                     report += "1,";
+                else
+                    report += "0,";
                 report += rnd.Next(0, 150).ToString() + ",";
                 if (rnd.Next(0, 10) == 0)
                     report += "1";
@@ -43,7 +43,7 @@ namespace monitor
                     report += "0";
                 byte[] sendbuf = Encoding.ASCII.GetBytes(report);
                 s.SendTo(sendbuf, new IPEndPoint(IPAddress.Parse("127.0.0.1"), SimulatedPort));
-                Console.WriteLine("2222"+DateTime.Now.ToLongTimeString());
+                Console.WriteLine("1111"+DateTime.Now.ToLongTimeString());
                 Thread.Sleep(1000);
             }
         };

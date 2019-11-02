@@ -16,24 +16,25 @@ namespace monitor
         public static event EventHandler Fire_Detect;
         public static event EventHandler Body_Detect;
 
+        public static float[] thresholds = {50,100,100,0,15,0};
         public static void Event_Triger(string s) {
             _words = s.Split(',');
-            if (Convert.ToInt32(_words[0]) > 50) {
+            if (Convert.ToInt32(_words[0]) > thresholds[0]) {
                 Heat_Detect(null,EventArgs.Empty);
             }
-            if (Convert.ToInt32(_words[1]) > 100) {
+            if (Convert.ToInt32(_words[1]) > thresholds[1]) {
                 Gas_Detect(null, EventArgs.Empty);
             }
-            if (Convert.ToInt32(_words[2]) > 100) {
+            if (Convert.ToInt32(_words[2]) > thresholds[2]) {
                 Fire_Detect(null, EventArgs.Empty);
             }
-            if (Convert.ToInt32(_words[3]) == 0) {
+            if (Convert.ToInt32(_words[3]) > thresholds[3]) {
                 Raining_Detect(null, EventArgs.Empty);
             }
-            if (Convert.ToInt32(_words[4]) < 15) {
+            if (Convert.ToInt32(_words[4]) < thresholds[4]) {
                 Opening_Door_Detect(null, EventArgs.Empty);
             }
-            if (Convert.ToInt32(_words[5]) == 1) {
+            if (Convert.ToInt32(_words[5]) > thresholds[5]) {
                 Body_Detect(null, EventArgs.Empty);
             }
         }

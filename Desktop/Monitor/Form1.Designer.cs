@@ -508,7 +508,7 @@
             this.textBox1.ReadOnly = true;
             this.textBox1.Size = new System.Drawing.Size(296, 22);
             this.textBox1.TabIndex = 6;
-            this.textBox1.Text = "C:\\SAVEPICTURE";
+            this.textBox1.Text = "D:\\SAVEPICTURE";
             // 
             // button9
             // 
@@ -732,7 +732,7 @@
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(88, 26);
             this.label21.TabIndex = 85;
-            this.label21.Text = "=1為無雨";
+            this.label21.Text = "=0為無雨";
             // 
             // label12
             // 

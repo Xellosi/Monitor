@@ -27,6 +27,7 @@ namespace monitor
         string VirtualArduino;
         VideoCapture Realcam;
         static readonly object _locker= new object();
+        Rectangle rect;
         Bitmap Shot;
         //private FilterInfoCollection webcam;
         //private VideoCapture cap;
@@ -58,6 +59,7 @@ namespace monitor
             FileFolder = textBox1.Text;
             tcpstart = false;
             Shot = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            rect = new Rectangle(0, 0, Shot.Width, Shot.Height);
             ctsUDPListen = new CancellationTokenSource();
             ctsUDPSend = new CancellationTokenSource();
             ctsTCPListen = new CancellationTokenSource();
@@ -81,35 +83,6 @@ namespace monitor
             InitDB();
             Detecting_Events();
             UpdateUI = Update_UI;
-        }
-        public void Reload()//刷新GridView
-        {
-            var index = 0;
-            //----------------------------------------------Select
-            //string selectstr = "select * from [arduinodata]";
-            //SqlConnection conn = new SqlConnection(connectstr);
-            //SqlDataAdapter adapter = new SqlDataAdapter();
-            //SqlCommand cmd = new SqlCommand(selectstr, conn);
-            //adapter.SelectCommand = cmd;
-            //table.Clear();
-            //adapter.Fill(table);
-            dataGridView1.DataSource = table;
-            //----------------------------------------自動編號 不會亂掉-----------------//
-            if (table.Rows.Count == 0)
-            {
-                index = table.Rows.Count + 1;
-            }
-            else
-            {
-                for (int i = 1; i <= table.Rows.Count; i++)
-                {
-                    string str = Convert.ToString(i);
-                    if (str == table.Rows[i - 1][0].ToString())
-                        index = table.Rows.Count + 1;
-                    else
-                        index = i;
-                }
-            }
         }
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -139,6 +112,10 @@ namespace monitor
                 {
                     //UDPListen.Join();
                 }
+            }
+            if (Listener != null)
+            {
+                Listener.Close();
             }
         }
         private void button1_Click(object sender, EventArgs e)
@@ -179,6 +156,8 @@ namespace monitor
         }
         private void button2_Click(object sender, EventArgs e)
         {
+            ctsUDPListen.Cancel();
+            Listener.Close();
             if (serialPort1.IsOpen)
                 serialPort1.Close();
             label14.Text = "未連接";
@@ -187,7 +166,6 @@ namespace monitor
             button2.Enabled = false;
             checkBox1.Enabled = false;
             checkBox2.Enabled = false;
-            ctsUDPListen.Cancel();
         }
         /*private void DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
@@ -241,7 +219,6 @@ namespace monitor
             button3.Enabled = true;
             button4.Enabled = false;
         }
-        /*----------------picture catch---------------------------*/
         private void button5_Click(object sender, EventArgs e)
         {
             camindex = comboBox2.SelectedIndex;
@@ -249,7 +226,6 @@ namespace monitor
             comboBox2.Enabled = false;
             button7.Enabled = true;
         }
-
         private void button7_Click(object sender, EventArgs e){
             pictureBox7.Image = null;
             camindex = -1;
@@ -257,7 +233,6 @@ namespace monitor
             comboBox2.Enabled = true;
             button7.Enabled = false;
         }
-        //更改路徑
         private void button9_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog path = new FolderBrowserDialog();
@@ -267,7 +242,6 @@ namespace monitor
                 FileFolder = path.SelectedPath;
             }
         }
-        //存檔
         private void SavePicture(string type_string)
         {
             var event_folder = Path.Combine(FileFolder, type_string);
@@ -285,33 +259,23 @@ namespace monitor
                 //TODO try https://stackoverflow.com/questions/21497537/allow-an-image-to-be-accessed-by-several-threads
                 var path = Path.Combine(event_folder, DateTime.Now.ToString("yyddmmss") + ".jpg");
                 lock (_locker) {
-                    using (Bitmap b = (Bitmap)Shot.Clone())
-                    using (Graphics g = Graphics.FromImage(b))
+                    //temporal scheme
+                    try
                     {
-                        g.DrawString(type_string, new Font("Arial", 100), Brushes.Red, new PointF(0, Screen.PrimaryScreen.Bounds.Height / 2));
-                        b.Save(path, ImageFormat.Jpeg);
+                        using (Bitmap b = (Bitmap)Shot.Clone())
+                        using (Graphics g = Graphics.FromImage(b))
+                        {
+                            g.DrawString(type_string, new Font("Arial", 100), Brushes.Red, new PointF(0, Screen.PrimaryScreen.Bounds.Height / 2));
+                            b.Save(path, ImageFormat.Jpeg);
+                        }
+                    }
+                    catch(InvalidOperationException e)
+                    {
+                        Console.WriteLine("AAA"+","+e.Source+","+e.Message+","+e.Data+","+e.StackTrace);
                     }
                 }
             }
-            /*
-            saveFileDialog1.InitialDirectory = @"D:\Savepicture\temperature(溫度)";    //預設路徑
-            //  textBox2.Text = NewPath;
-            if (a == 1)
-            {
-                FinalPath = NewPath + @"\";
-                this.pictureBox7.Image.Save(saveFileDialog1.InitialDirectory + "IMG" + DateTime.Now.ToString("yyddmmss") + ".jpg");
-
-            }
-            else if (a == 0)
-            {
-                //   textBox2.Text = saveFileDialog1.InitialDirectory;
-                FinalPath = saveFileDialog1.InitialDirectory;
-
-            }
-            this.pictureBox7.Image.Save(saveFileDialog1.InitialDirectory + "IMG" + DateTime.Now.ToString("yyddmmss") + ".jpg");
-            */
         }
-        /*-------------------Picture catch End---------------------*/
         private void button8_Click(object sender, EventArgs e)
         {
             Inquiry frm = new Inquiry();
@@ -328,60 +292,30 @@ namespace monitor
             }
             frm.Dispose();
         }
-        private void pa1_Click(object sender, EventArgs e)
-        {
-            pa1.FlatAppearance.BorderSize = 2;
-            pa2.FlatAppearance.BorderSize = 0;
-            pa3.FlatAppearance.BorderSize = 0;
-            pa4.FlatAppearance.BorderSize = 0;
-            tabControl2.SelectTab(0);
-        }
-        private void pa2_Click(object sender, EventArgs e)
-        {
-            pa1.FlatAppearance.BorderSize = 0;
-            pa2.FlatAppearance.BorderSize = 2;
-            pa3.FlatAppearance.BorderSize = 0;
-            pa4.FlatAppearance.BorderSize = 0;
-            tabControl2.SelectTab(1);
-        }
-        private void pa3_Click(object sender, EventArgs e)
-        {
-            pa1.FlatAppearance.BorderSize = 0;
-            pa2.FlatAppearance.BorderSize = 0;
-            pa3.FlatAppearance.BorderSize = 2;
-            pa4.FlatAppearance.BorderSize = 0;
-            tabControl2.SelectTab(2);
-        }
-        private void pa4_Click(object sender, EventArgs e)
-        {
-            pa1.FlatAppearance.BorderSize = 0;
-            pa2.FlatAppearance.BorderSize = 0;
-            pa3.FlatAppearance.BorderSize = 0;
-            pa4.FlatAppearance.BorderSize = 2;
-            tabControl2.SelectTab(3);
-        }
         private bool Start_UDP(){
             try {
             ctsUDPListen = new CancellationTokenSource();
             UDPListen = new Task(() =>{
                 //https://www.codeproject.com/Questions/486669/HowplustopluscloseplusUDPplusport-3f
-                if (Listener == null)
-                {
-                    Listener = new UdpClient(Program.SimulatedPort);
-                }
+                Listener = new UdpClient(Program.SimulatedPort);
                 IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, Program.SimulatedPort);
                 while (!ctsUDPListen.Token.IsCancellationRequested)
                 {
-                    byte[] bytes = Listener.Receive(ref groupEP);
-                    string s = Encoding.ASCII.GetString(bytes, 0, bytes.Length);
-                    this.values = Array.ConvertAll(s.Split(','),float.Parse);
-                    if (camindex >=0)
-                        Take_Shot();
-                    this.Invoke(UpdateUI,s);
-                    if (tcpstart == true)
-                        TCP_Send(s);
-                    SensorValues.Event_Triger(s);
-                    Console.WriteLine("1111" + DateTime.Now.ToLongTimeString());
+                    try {
+                        byte[] bytes = Listener.Receive(ref groupEP);
+                        string s = Encoding.ASCII.GetString(bytes, 0, bytes.Length);
+                        this.values = Array.ConvertAll(s.Split(','), float.Parse);
+                        if (camindex >= 0)
+                            Take_Shot();
+                        this.Invoke(UpdateUI, s);
+                        if (tcpstart == true)
+                            TCP_Send(values);
+                        SensorValues.Event_Triger(s);
+                        Console.WriteLine("2222" + DateTime.Now.ToLongTimeString());
+                    }
+                    catch{
+                        Console.WriteLine("UDP end");
+                    }
                 }});
             UDPListen.Start();
             }
@@ -405,17 +339,42 @@ namespace monitor
                 }
             }
         }
-        private void TCP_Send(string s)
+        private void TCP_Send(float[] values)
         {
             // SendS 在這裡為 string 型態, 為 Server 要傳給 Client 的字串
-            Byte[] returningByte = System.Text.Encoding.UTF8.GetBytes((s+"\n").ToCharArray());
+            var message = new StringBuilder();
+            for (int i=0; i<SensorValues.thresholds.Length; i++)
+            {
+                message.Append(Convert.ToInt32(values[i]).ToString());
+                if (i == 4)
+                {
+                    if (values[i] > SensorValues.thresholds[i])
+                    {
+                        message.Append(",0,");
+                    }
+                    else
+                    {
+                        message.Append(",1,");
+                    }
+                }
+                else if (values[i] > SensorValues.thresholds[i])
+                {
+                    message.Append(",1,");
+                }
+                else
+                {
+                    message.Append(",0,");
+                }
+            }
+            message.Remove(message.Length-1, 1);
+            Byte[] returningByte = System.Text.Encoding.UTF8.GetBytes((message.ToString()+"\n").ToCharArray());
             this.Invoke((MethodInvoker)delegate { label19.Text ="";});
             for (int i = Sockets.Count -1; i>=0; i--)
             {
                 if (Sockets[i].Connected == true)
                 {
                     Sockets[i].Send(returningByte, returningByte.Length, 0);
-                    Console.WriteLine(Sockets[i].LocalEndPoint.ToString() + "," + s);
+                    Console.WriteLine(Sockets[i].LocalEndPoint.ToString() + "," + message.ToString());
                     this.Invoke((MethodInvoker)delegate { label19.Text += "\n" + Sockets[i].RemoteEndPoint.ToString(); });
                 }
                 else
@@ -433,7 +392,7 @@ namespace monitor
             label4.Text = s[3];
             label5.Text = s[4];
             label6.Text = s[5];
-            if (Convert.ToInt32(s[0]) > 50)
+            if (Convert.ToInt32(s[0]) > SensorValues.thresholds[0])
             {
                 pictureBox1.Visible = true;
                 label1.ForeColor = Color.Red;
@@ -443,7 +402,7 @@ namespace monitor
                 pictureBox1.Visible = false;
                 label1.ForeColor = Color.Black;
             }
-            if (Convert.ToInt32(s[1]) > 100)
+            if (Convert.ToInt32(s[1]) > SensorValues.thresholds[1])
             {
                 pictureBox2.Visible = true;
                 label2.ForeColor = Color.Red;
@@ -453,7 +412,7 @@ namespace monitor
                 pictureBox2.Visible = false;
                 label2.ForeColor = Color.Black;
             }
-            if (Convert.ToInt32(s[2]) > 100)
+            if (Convert.ToInt32(s[2]) > SensorValues.thresholds[2])
             {
                 pictureBox3.Visible = true;
                 label3.ForeColor = Color.Red;
@@ -463,7 +422,7 @@ namespace monitor
                 pictureBox3.Visible = false;
                 label3.ForeColor = Color.Black;
             }
-            if (Convert.ToInt32(s[3]) == 0)
+            if (Convert.ToInt32(s[3]) > SensorValues.thresholds[3])
             {
                 pictureBox4.Visible = true;
                 label4.ForeColor = Color.Red;
@@ -473,7 +432,7 @@ namespace monitor
                 pictureBox4.Visible = false;
                 label4.ForeColor = Color.Black;
             }
-            if (Convert.ToInt32(s[4]) < 15)
+            if (Convert.ToInt32(s[4]) < SensorValues.thresholds[4])
             {
                 pictureBox5.Visible = true;
                 label5.ForeColor = Color.Red;
@@ -483,7 +442,7 @@ namespace monitor
                 pictureBox5.Visible = false;
                 label5.ForeColor = Color.Black;
             }
-            if (Convert.ToInt32(s[5]) == 1)
+            if (Convert.ToInt32(s[5]) > SensorValues.thresholds[5])
             {
                 pictureBox6.Visible = true;
                 label6.ForeColor = Color.Red;
@@ -502,14 +461,13 @@ namespace monitor
                 }
             }
         }
-
         private void Take_Shot()
         {
             lock (_locker)
             {
                 if (camindex == 0)
                 {
-                    using (var gfxScreenshot = Graphics.FromImage(Shot))
+                    using (var gfxScreenshot = Graphics.FromImage((Bitmap)Shot))
                     {
                         // Take the screenshot from the upper left corner to the right bottom corner.
                         gfxScreenshot.CopyFromScreen(Screen.PrimaryScreen.Bounds.X,
@@ -599,6 +557,65 @@ namespace monitor
                 sqlcommand.Parameters.AddWithValue("@datatime", time);
                 sqlcommand.ExecuteNonQuery();
             }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        private void pa1_Click(object sender, EventArgs e)
+        {
+            pa1.FlatAppearance.BorderSize = 2;
+            pa2.FlatAppearance.BorderSize = 0;
+            pa3.FlatAppearance.BorderSize = 0;
+            pa4.FlatAppearance.BorderSize = 0;
+            tabControl2.SelectTab(0);
+        }
+        private void pa2_Click(object sender, EventArgs e)
+        {
+            pa1.FlatAppearance.BorderSize = 0;
+            pa2.FlatAppearance.BorderSize = 2;
+            pa3.FlatAppearance.BorderSize = 0;
+            pa4.FlatAppearance.BorderSize = 0;
+            tabControl2.SelectTab(1);
+        }
+        private void pa3_Click(object sender, EventArgs e)
+        {
+            pa1.FlatAppearance.BorderSize = 0;
+            pa2.FlatAppearance.BorderSize = 0;
+            pa3.FlatAppearance.BorderSize = 2;
+            pa4.FlatAppearance.BorderSize = 0;
+            tabControl2.SelectTab(2);
+        }
+        private void pa4_Click(object sender, EventArgs e)
+        {
+            pa1.FlatAppearance.BorderSize = 0;
+            pa2.FlatAppearance.BorderSize = 0;
+            pa3.FlatAppearance.BorderSize = 0;
+            pa4.FlatAppearance.BorderSize = 2;
+            tabControl2.SelectTab(3);
         }
     }
 }
