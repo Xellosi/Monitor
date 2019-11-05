@@ -265,7 +265,7 @@ namespace monitor
                         using (Bitmap b = (Bitmap)Shot.Clone())
                         using (Graphics g = Graphics.FromImage(b))
                         {
-                            g.DrawString(type_string, new Font("Arial", 100), Brushes.Red, new PointF(0, Screen.PrimaryScreen.Bounds.Height / 2));
+                            g.DrawString(type_string, new Font("Arial", 100), Brushes.Red, new PointF(Screen.PrimaryScreen.Bounds.Width / 8, Screen.PrimaryScreen.Bounds.Height / 4));
                             b.Save(path, ImageFormat.Jpeg);
                         }
                     }

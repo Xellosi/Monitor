@@ -32,8 +32,6 @@ public class MainActivity extends AppCompatActivity {
     private BufferedReader br;
     private Thread thread;
     private ToastHandler th;
-    private String alarm_title;
-    private String alarm_message;
     private Notification notify;
     private NotificationManager Nm;
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
         start.setOnClickListener(press_start);
         end.setOnClickListener(press_end);
         Nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE); // 取得系統的通知服務
-        notify = new Notification.Builder(getApplicationContext()).setSmallIcon(R.drawable.ic_launcher_foreground).setContentTitle(alarm_title).setContentText(alarm_message).build();
     }
 
     private final Runnable connect = new Runnable() {
@@ -123,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
                     temp.setTextColor(Color.GREEN);
                 else {
                     temp.setTextColor(Color.RED);
-                    show_notification("溫度過高", "");
+                    show_notification("溫度過高", "溫度過高");
                 }
                 if (Integer.parseInt(l[3])==0) {
                     gas.setText("正常");
@@ -132,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     gas.setText("過高");
                     gas.setTextColor(Color.RED);
-                    show_notification("溫度過高", "");
+                    show_notification("瓦斯濃度過高", "瓦斯濃度過高");
                 }
                 if (Integer.parseInt(l[5])==0){
                     fire.setText("無");
@@ -141,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     fire.setText("火光反應");
                     fire.setTextColor(Color.RED);
-                    show_notification("溫度過高", "");
+                    show_notification("火光反應", "火光反應");
                 }
                 if (Integer.parseInt(l[7])==0){
                     rain.setText("無");
@@ -150,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     rain.setText("有");
                     rain.setTextColor(Color.RED);
-                    show_notification("溫度過高", "");
+                    show_notification("偵測到下雨", "偵測到下雨");
                 }
                 if (Integer.parseInt(l[9])==0) {
                     dist.setText("門關閉");
@@ -159,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     dist.setText("門打開");
                     dist.setTextColor(Color.RED);
-                    show_notification("溫度過高", "");
+                    show_notification("偵測到開門", "偵測到開門");
                 }
                 if (Integer.parseInt(l[11])==0) {
                     body.setText("無反應");
@@ -168,17 +165,16 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     body.setText("有反應");
                     body.setTextColor(Color.RED);
-                    show_notification("溫度過高", "");
+                    show_notification("感測到人體", "感測到人體");
                 }
             }
         });
     }
 
     public void show_notification(String title , String m){
-        this.alarm_title=title;
-        this.alarm_message = m;
+        this.notify = new Notification.Builder(getApplicationContext()).setSmallIcon(R.drawable.ic_launcher_foreground).setContentTitle(title).setContentText(m).build();
         Nm.notify(0, notify);
-        Log.i("dfdf","sdfdsf");
+        Log.i("title","m");
     }
 
     private View.OnClickListener press_start = new View.OnClickListener() {
