@@ -92,10 +92,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             } catch (UnknownHostException e) {
-                th.showToast("連線失敗",3);
+                //th.showToast("連線失敗",3);
                 Log.d("1",e.toString());
             } catch (IOException exe) {
-                th.showToast("連線失敗",3);
+                //th.showToast("連線失敗",3);
                 Log.d("2",exe.toString());
             }
         }
